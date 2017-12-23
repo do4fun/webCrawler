@@ -5,18 +5,19 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Set;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 
 public class Engine
 {
-
-	private HashSet<String> pages = new HashSet<String>();
+	private Set<Element> hrefElements = Collections.synchronizedSet( new HashSet<Element>() );
 	private HashSet<String> intialHrefs = new HashSet<String>();
+	private HashSet<String> excludeHrefs = new HashSet<String>();
 	private HashSet<Stewart> stewarts = new HashSet<Stewart>();
 	private Statement stmt = null;
 
@@ -41,22 +42,42 @@ public class Engine
 		}
 	}
 
-	public void search( String href )
+	public void search( String hrefDocument )
 	{
 		try
 		{
-			Document document = Jsoup.connect( href ).get();
+			Document document = Jsoup.connect( hrefDocument ).get();
 			if ( document != null )
 			{
-				save( href, document.body().toString() );
-				HashSet<String> hyperlinks = getValidHyperlinks( document );
-				if ( hyperlinks != null )
+				// extract all href element of a document
+				synchronized( hrefElements )
 				{
-					pages.addAll( hyperlinks );
-					for ( String hyperlink : pages )
+					hrefElements.addAll( document.select( "a[href]" ) );
+					if ( !hrefElements.isEmpty() )
 					{
-						pages.remove( hyperlink );
-						search( hyperlink );
+						for ( Element hrefElement : hrefElements )
+						{
+							// Extract url from of a href element
+							String hyperlink = hrefElement.attr( "abs:href" );
+							if ( hyperlink != null && !excludeHrefs.contains( hyperlink ) )
+							{
+								hrefElements.remove( hrefElement );
+								for ( Stewart stewart : stewarts )
+								{
+									// If url is a valid
+									if ( stewart.validateURL( hyperlink ) )
+									{
+										// Save document's body If the url is
+										// valid to scraps
+										if ( stewart.isToScrap() )
+										{
+											save( hyperlink, document.body().toString() );
+										}
+									}
+								}
+								search( hyperlink );
+							}
+						}
 					}
 				}
 			}
@@ -66,40 +87,12 @@ public class Engine
 		}
 	}
 
-	private HashSet<String> getValidHyperlinks( Document document )
-	{
-		Elements hrefElements = document.select( "a[href]" );
-		HashSet<String> hyperlinks = new HashSet<String>();
-		if ( hrefElements != null )
-		{
-			for ( Element hrefElement : hrefElements )
-			{
-				String href = hrefElement.attr( "abs:href" );
-				if ( !href.isEmpty() && isValidHyperlink( href ) )
-				{
-					hyperlinks.add( href );
-				}
-			}
-		}
-		return hyperlinks;
-	}
-
-	private boolean isValidHyperlink( String hyperlink )
-	{
-		for ( Stewart stewart : stewarts )
-			if ( stewart.validateURL( hyperlink ) )
-			{
-				return true;
-			}
-		return false;
-	}
-
 	public void addStewarts( Stewart stewart )
 	{
 		stewarts.add( stewart );
 	}
 
-	private void save( String href, String html )
+	private synchronized void save( String href, String html )
 	{
 		html = html.replaceAll( "\\'", "" );
 		String sqlString = "INSERT INTO htmlscrap (hyperlink, html ) VALUES ('" + href + "', '" + html + "' )";
