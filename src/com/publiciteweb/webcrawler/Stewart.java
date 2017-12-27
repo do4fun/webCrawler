@@ -1,8 +1,5 @@
 package com.publiciteweb.webcrawler;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 public class Stewart
 {
 	private boolean onSpecificPattern = true;
@@ -20,7 +17,8 @@ public class Stewart
 
 	protected boolean basicValidationURL( String href )
 	{
-		if ( validateNullValue( href ) )
+
+		if ( validateNullValue( href.toString() ) )
 		{
 			return false;
 		}
@@ -43,16 +41,13 @@ public class Stewart
 		return true;
 	}
 
-	public boolean isValidPattern( String href )
-	{
-		Pattern pattern = Pattern.compile( regularExpression );
-		Matcher matcher = pattern.matcher( href );
-		return matcher.matches();
-	}
-
 	public boolean validateURL( String href )
 	{
-		return basicValidationURL( href ) && !isMailToLink( href );
+		if ( basicValidationURL( href ) == false )
+		{
+			return false;
+		}
+		return true;
 	}
 
 	public boolean validateNullValue( String string )
@@ -82,23 +77,23 @@ public class Stewart
 	{
 		if ( string.indexOf( ".css" ) >= 0 )
 		{
-			return false;
+			return true;
 		}
 		if ( string.indexOf( ".ico" ) >= 0 )
 		{
-			return false;
+			return true;
 		}
 		if ( string.indexOf( ".pdf" ) >= 0 )
 		{
-			return false;
+			return true;
 		}
 		if ( string.indexOf( "javascript" ) >= 0 )
 		{
-			return false;
+			return true;
 		}
 		if ( string.indexOf( "#" ) >= 0 )
 		{
-			return false;
+			return true;
 		}
 		return true;
 	}

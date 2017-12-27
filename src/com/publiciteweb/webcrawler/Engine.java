@@ -83,7 +83,6 @@ public class Engine
 			}
 		}catch( IOException e )
 		{
-			System.out.println( hrefDocument );
 			e.printStackTrace();
 		}
 	}
