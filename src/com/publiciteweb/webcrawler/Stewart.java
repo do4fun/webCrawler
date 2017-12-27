@@ -3,7 +3,7 @@ package com.publiciteweb.webcrawler;
 public class Stewart
 {
 	private boolean onSpecificPattern = true;
-	private String root, pattern;
+	private String root, regularExpression;
 	private boolean toScrap = false;
 
 	public Stewart()
@@ -11,23 +11,24 @@ public class Stewart
 
 	public Stewart( String root, String pattern )
 	{
-		this.pattern = pattern;
+		this.regularExpression = pattern;
 		this.root = root;
 	}
 
 	protected boolean basicValidationURL( String href )
 	{
+
 		if ( validateNullValue( href.toString() ) )
 		{
 			return false;
 		}
 
-		if ( validateExtension( href.toString() ) )
+		if ( !validateExtension( href ) )
 		{
 			return false;
 		}
 
-		if ( validateSpecialChar( href.toString() ) )
+		if ( !validateSpecialChar( href ) )
 		{
 			return false;
 		}
@@ -58,9 +59,9 @@ public class Stewart
 	{
 		if ( ( string.indexOf( "{" ) >= 0 ) || ( string.indexOf( "}" ) >= 0 ) || ( string.indexOf( "%space%" ) >= 0 ) )
 		{
-			return true;
+			return false;
 		}
-		return false;
+		return true;
 	}
 
 	public boolean validateAdressParameter( String string )
@@ -94,7 +95,12 @@ public class Stewart
 		{
 			return true;
 		}
-		return false;
+		return true;
+	}
+
+	public boolean isMailToLink( String href )
+	{
+		return href.contains( "mailto" );
 	}
 
 	public boolean isOnSpecificPattern()
@@ -117,14 +123,14 @@ public class Stewart
 		this.root = root;
 	}
 
-	public String getPattern()
+	public String getRegularExpression()
 	{
-		return pattern;
+		return regularExpression;
 	}
 
-	public void setPattern( String pattern )
+	public void setRegularExpression( String pattern )
 	{
-		this.pattern = pattern;
+		this.regularExpression = pattern;
 	}
 
 	public boolean isToScrap()

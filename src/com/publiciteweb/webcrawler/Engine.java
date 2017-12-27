@@ -49,33 +49,33 @@ public class Engine
 			Document document = Jsoup.connect( hrefDocument ).get();
 			if ( document != null )
 			{
-				// extract all href element of a document
-				synchronized( hrefElements )
+				hrefElements.addAll( document.select( "a[href]" ) );
+				if ( !hrefElements.isEmpty() )
 				{
-					hrefElements.addAll( document.select( "a[href]" ) );
-					if ( !hrefElements.isEmpty() )
+					for ( Element hrefElement : hrefElements )
 					{
-						for ( Element hrefElement : hrefElements )
+						// Extract url from of a href element
+						String hyperlink = hrefElement.attr( "abs:href" );
+						if ( hyperlink != null && !excludeHrefs.contains( hyperlink ) )
 						{
-							// Extract url from of a href element
-							String hyperlink = hrefElement.attr( "abs:href" );
-							if ( hyperlink != null && !excludeHrefs.contains( hyperlink ) )
+							excludeHrefs.add( hyperlink );
+							for ( Stewart stewart : stewarts )
 							{
-								hrefElements.remove( hrefElement );
-								for ( Stewart stewart : stewarts )
+								// If url is a valid
+								if ( stewart.validateURL( hyperlink ) && hyperlink.contains( stewart.getRegularExpression() ) )
 								{
-									// If url is a valid
-									if ( stewart.validateURL( hyperlink ) )
+									System.out.println( "true  ---         : " + hyperlink );
+									// Save document's body If the url is
+									// valid to scraps
+									if ( stewart.isToScrap() )
 									{
-										// Save document's body If the url is
-										// valid to scraps
-										if ( stewart.isToScrap() )
-										{
-											save( hyperlink, document.body().toString() );
-										}
+										save( hyperlink, document.body().toString() );
 									}
+									search( hyperlink );
+								}else
+								{
+									System.out.println( stewart.validateURL( hyperlink ) + "  ---  " + hyperlink.contains( stewart.getRegularExpression() ) + " : " + hyperlink );
 								}
-								search( hyperlink );
 							}
 						}
 					}
